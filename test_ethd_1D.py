@@ -222,13 +222,13 @@ def compute_model(q, params, full_id):
     return res
 
 
-def run_QC_1D(nsnaps,nsteps, params, case, ent_opt):
+def run_QC_1D(params, case, ent_opt):
 
     """
     Runs tests for 1D model problems using ensembles of trajectories
     """
     
-    ndia, nadi, nnucl, ntraj = 1, 1, 1, 25
+    ndia, nadi, nnucl, ntraj = 1, 1, 1, 5000
 
     # ======= Hierarchy of Hamiltonians =======
     ham = nHamiltonian(ndia, nadi, nnucl)
@@ -245,6 +245,7 @@ def run_QC_1D(nsnaps,nsteps, params, case, ent_opt):
 
     # Initialize Simulation 
     dt = params["dt"]
+    nsnaps, nsteps = params["nsnaps"], params["nsteps"] 
     params.update({"ndof":nnucl, "ntraj":ntraj})
  
     print "ent_opt = ", ent_opt
@@ -318,7 +319,7 @@ def make_fig(models,ent_opts,cases):
                 f.close()
                 b = l[-1].strip().split()
                 data[i].set(j,k,float(b[4]))
-
+      
         out1 = open("_fig_model"+str(models[i])+".txt", "w"); out1.close()
         for j in xrange(len(cases)):
             out1 = open("_fig_model"+str(models[i])+".txt", "a")
@@ -329,91 +330,6 @@ def make_fig(models,ent_opts,cases):
                 out1.write( "%8.5f %8.5f %8.5f\n" % ( cases[j] + 0.0, data[i].get(0,j), data[i].get(1,j) ) )
                 out1.close()
 
-
-def init_params(model, case):
-    """
-    This function intiializes the params dictionary for a given case    
-    """
-
-    params = {"dt":1.0}
-
-    if model==1:
-        # Harmonic Oscillator
-        params.update( {"model":1} )
-        params.update( {"barrier":50} )
-
-        if   case == 0:
-            params.update( {"q0":-1.0, "p0":0.0, "sq0":0.1, "sp0":0.0} )
-            params.update( {"k":0.032, "x0":0.0} )
-
-
-    elif model==2:
-        # Morse Oscillator
-        params.update( {"model":2} )
-        params.update( {"barrier":50} )
-
-        if   case == 0:
-            params.update( {"q0":-1.1, "p0":3.0, "sq0":0.04, "sp0":0.0} )
-            params.update( {"k":0.032, "D":0.1, "x0":0.0} )
-
-    elif model == 3:
-
-        params.update( {"model":3} )
-
-        if   case == 0:
-            params.update( {"A":0.0030, "B":0.5*math.pi, "C":0.0030, "k":1.0, "q0":0.0, "p0":0.0, "sq0":0.25, "sp0":0.0} )
-        elif case == 1:
-            params.update( {"A":0.0025, "B":0.5*math.pi, "C":0.0025, "k":1.0, "q0":0.0, "p0":0.0, "sq0":0.25, "sp0":0.0} )
-        elif case == 2:
-            params.update( {"A":0.0020, "B":0.5*math.pi, "C":0.0020, "k":1.0, "q0":0.0, "p0":0.0, "sq0":0.25, "sp0":0.0} )
-        elif case == 3:
-            params.update( {"A":0.0015, "B":0.5*math.pi, "C":0.0015, "k":1.0, "q0":0.0, "p0":0.0, "sq0":0.25, "sp0":0.0} )
-        elif case == 4:
-            params.update( {"A":0.0010, "B":0.5*math.pi, "C":0.0010, "k":1.0, "q0":0.0, "p0":0.0, "sq0":0.25, "sp0":0.0} )
-
-        params.update( {"barrier":2.0*math.pi/params["k"]} )
-
-
-    elif model == 4:
-
-        params.update( {"model":4} )
-
-        if   case == 0:
-            params.update( {"Va":0.0125, "q0":-1.0, "p0":1.0, "sq0":0.25, "sp0":0.0} )
-        elif case == 1:
-            params.update( {"Va":0.0125, "q0":-1.0, "p0":2.0, "sq0":0.25, "sp0":0.0} )
-        elif case == 2:
-            params.update( {"Va":0.0125, "q0":-1.0, "p0":3.0, "sq0":0.25, "sp0":0.0} )
-        elif case == 3:
-            params.update( {"Va":0.0125, "q0":-1.0, "p0":4.0, "sq0":0.25, "sp0":0.0} )
-        elif case == 4:
-            params.update( {"Va":0.0125, "q0":-1.0, "p0":5.0, "sq0":0.25, "sp0":0.0} )
-        elif case == 5:
-            params.update( {"Va":0.0125, "q0":-1.0, "p0":6.0, "sq0":0.25, "sp0":0.0} )
-        elif case == 6:
-            params.update( {"Va":0.0125, "q0":-1.0, "p0":7.0, "sq0":0.25, "sp0":0.0} )
-        elif case == 7:
-            params.update( {"Va":0.0125, "q0":-1.0, "p0":8.0, "sq0":0.25, "sp0":0.0} )
-
-    return params
-
-
-def run1D(nsnaps, nsteps):
-
-    models   = [2]
-    ent_opts = [0]
-    cases    = [0]
-  
-    for model in models:
-        for ent_opt in ent_opts:
-            for case in cases:
-                params = init_params(model, case)
-                run_QC_1D(nsnaps, nsteps, params, case, ent_opt)
- 
-    # Post-Processing
-    make_fig(models,ent_opts,cases)
-
-nsnaps = 100
-nsteps = 10
-run1D(nsnaps, nsteps)
+# Post-Processing
+#make_fig(models,ent_opts,cases)
 

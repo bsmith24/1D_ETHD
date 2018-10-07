@@ -21,7 +21,8 @@ elif sys.platform=="linux" or sys.platform=="linux2":
     from liblibra_core import *
 from libra_py import *
 
-import test_ho
+
+import test_ethd_1D
 
 class tmp:
     pass
@@ -63,12 +64,13 @@ def model1(q, params, full_id):
     obj.d1ham_dia = d1ham_dia
     obj.dc1_dia = dc1_dia
 
-    return obj
-    
+    return obj   
+
+
 def model2(q, params, full_id):
     """
-    Symmetric Double Well Potential
-    Hdia = 0.25*q^4 - 0.5*q^2   
+    Morse Potential
+    Hdia = D * ( 1 - exp ( alp(x-x0) ) )^2   
     Sdia = 1.0
     Ddia = 0.0
     """
@@ -82,14 +84,18 @@ def model2(q, params, full_id):
     dc1_dia = CMATRIXList();  dc1_dia.append( CMATRIX(1,1) )
 
     x = q.col(indx).get(0)
-    x2 = x*x
+    k, D, x0 = params["k"], params["D"], params["x0"]
 
-    Hdia.set(0,0, (0.25*x2*x2 - 0.5*x2)*(1.0+0.0j) )
+    # Calculate alpha
+    alp = math.sqrt(0.5*k/D)
+    # Compute potential
+    V = ( 1.0 - math.exp( -alp*(x-x0) ) )
+
+    Hdia.set(0,0, D*V*V*(1.0+0.0j) )
     Sdia.set(0,0, 1.0+0.0j)
-
     for i in [0]:
         #  d Hdia / dR_0
-        d1ham_dia[i].set(0,0, x*(x2 - 1.0)*(1.0+0.0j) )
+        d1ham_dia[i].set( 0,0, ( 2.0*D*V*alp*math.exp(-alp*(x-x0)) )*(1.0+0.0j) )
 
         #  <dia| d/dR_0| dia >
         dc1_dia[i].set(0,0, 0.0+0.0j)
@@ -253,13 +259,14 @@ def plot_pes_1D(params,case):
         f.close()
 
 
-def run_exact(nsnaps, nsteps, params, case):
+def run_exact(params, case):
     """
     The main routine to run fully quantum calculations
     """
 
     dt = params["dt"]
     # Here we initialize the grid and wavefunction
+    nsnaps, nsteps = params["nsnaps"], params["nsteps"]
 
     # 1-D Initilization
     wfc = Wfcgrid(-50.0, 50.0, 0.01, 1)
@@ -268,11 +275,15 @@ def run_exact(nsnaps, nsteps, params, case):
     wfc.update_propagator_1D(0.5*dt, params["mass"])  # this is important because we are using exp(-0.5*dt*H_loc)...
     wfc.update_propagator_K_1D(dt, params["mass"])    # ... together with exp(-dt*H_non-loc)    
  
-    wfc.normalize_1D()
+    wfc.normalize_wfc_1D()
 
     f = open("_pops"+str(case)+".txt", "w")
     f.close()
   
+
+    exp_pow = doubleList()
+    exp_pow.append(2.0)
+
     flux = doubleList()
     flux.append(0.0)          # len(flux[i]) = nstates
     tot_flux = 0.0
@@ -280,14 +291,14 @@ def run_exact(nsnaps, nsteps, params, case):
     os.system("mkdir _res"+str(case)+"")
     for i in xrange(nsnaps):  # time steps
 
-        wfc.print_wfc_1D("_res"+str(case)+"/wfc", i, 0)   # Be sure to make a "res" directory
+        wfc.print_wfc_1D("_res"+str(case)+"/wfc", i*dt*nsteps, 0)   # Be sure to make a "res" directory
         #wfc.print_reci_wfc_1D("res/reci_wfc", i*dt*nsteps, 0)
 
         epot = wfc.e_pot_1D()
         ekin = wfc.e_kin_1D(params["mass"])
         etot = epot + ekin
         x, px   = wfc.get_x_1D(),  wfc.get_px_1D()
-        x2, px2 = wfc.get_x2_1D(), wfc.get_px2_1D()
+        x2, px2  = wfc.get_pow_x_1D(exp_pow[0]), wfc.get_pow_px_1D(2)
 
         f = open("_pops"+str(case)+".txt", "a")
         f.write("%8.5f   %8.5f   %8.5f   %8.5f  %8.5f  %8.5f    %8.5f    %8.5f  %8.5f  %8.5f\n" % (i*nsteps*dt, ekin, epot, etot, cum, x, px, x2, px2, wfc.norm_1D())) 
@@ -308,29 +319,29 @@ def init_params(model, case):
     This function intiializes the params dictionary for a given case    
     """
 
-    params = {"mass":2000.0, "dt":1.0}
+    params = {"dt":1.0}
 
-    if   model == 2:
-        # Double Well
+    if model==1:
+        # 1D harmonic oscillator
+        params.update( {"model":1} )
+        params.update( {"barrier":50} )
+
         if   case == 0:
-            params.update( {"model":2, "q0":-1.1, "p0":0.0, "sq0":0.04, "sp0":0.0} )
-        elif case == 1:
-            params.update( {"model":2, "q0":-1.1, "p0":1.0, "sq0":0.04, "sp0":0.0} )
-        if   case == 2:
-            params.update( {"model":2, "q0":-1.1, "p0":2.0, "sq0":0.04, "sp0":0.0} )
-        elif case == 3:
-            params.update( {"model":2, "q0":-1.1, "p0":3.0, "sq0":0.04, "sp0":0.0} )
-        if   case == 4:
-            params.update( {"model":2, "q0":-1.1, "p0":4.0, "sq0":0.04, "sp0":0.0} )
-        elif case == 5:
-            params.update( {"model":2, "q0":-1.1, "p0":5.0, "sq0":0.04, "sp0":0.0} )
-        if   case == 6:
-            params.update( {"model":2, "q0":-1.1, "p0":6.0, "sq0":0.04, "sp0":0.0} )
-        elif case == 7:
-            params.update( {"model":2, "q0":-1.1, "p0":7.0, "sq0":0.04, "sp0":0.0} )
+            params.update( {"q0":0.0, "p0":0.0, "sq0":0.1, "sp0":0.0} )
+            params.update( {"k":0.032, "x0":0.0, "mass":2000.0} )
 
-    elif model == 3:        
 
+    elif model==2:
+        # 1D morse oscillator
+        params.update( {"model":2} )
+        params.update( {"barrier":50} )
+
+        if   case == 0:
+            params.update( {"q0":0.0, "p0":0.0, "sq0":0.1, "sp0":0.0} )
+            params.update( {"k":0.032, "D":0.1, "x0":0.0, "mass":2000.0} )
+
+    elif model == 3:
+        # 1D sin potential
         params.update( {"model":3} )
 
         if   case == 0:
@@ -348,40 +359,51 @@ def init_params(model, case):
 
 
     elif model == 4:
-        # 1-D Eckart Barrier 
-        params.update( {"model":4, "barrier":0.0} )
+        # 1D eckart barrier
+        params.update( {"model":4} )
 
         if   case == 0:
-            params.update( {"Va":0.00625, "q0":-1.0, "p0":1.0, "sq0":0.25, "sp0":0.0} )
+            params.update( {"Va":0.0125, "q0":-1.0, "p0":1.0, "sq0":0.25, "sp0":0.0} )
         elif case == 1:
-            params.update( {"Va":0.00625, "q0":-1.0, "p0":2.0, "sq0":0.25, "sp0":0.0} )
+            params.update( {"Va":0.0125, "q0":-1.0, "p0":2.0, "sq0":0.25, "sp0":0.0} )
         elif case == 2:
-            params.update( {"Va":0.00625, "q0":-1.0, "p0":3.0, "sq0":0.25, "sp0":0.0} )
+            params.update( {"Va":0.0125, "q0":-1.0, "p0":3.0, "sq0":0.25, "sp0":0.0} )
         elif case == 3:
-            params.update( {"Va":0.00625, "q0":-1.0, "p0":4.0, "sq0":0.25, "sp0":0.0} )
+            params.update( {"Va":0.0125, "q0":-1.0, "p0":4.0, "sq0":0.25, "sp0":0.0} )
         elif case == 4:
-            params.update( {"Va":0.00625, "q0":-1.0, "p0":5.0, "sq0":0.25, "sp0":0.0} )
+            params.update( {"Va":0.0125, "q0":-1.0, "p0":5.0, "sq0":0.25, "sp0":0.0} )
         elif case == 5:
-            params.update( {"Va":0.00625, "q0":-1.0, "p0":6.0, "sq0":0.25, "sp0":0.0} )
+            params.update( {"Va":0.0125, "q0":-1.0, "p0":6.0, "sq0":0.25, "sp0":0.0} )
         elif case == 6:
-            params.update( {"Va":0.00625, "q0":-1.0, "p0":7.0, "sq0":0.25, "sp0":0.0} )
+            params.update( {"Va":0.0125, "q0":-1.0, "p0":7.0, "sq0":0.25, "sp0":0.0} )
         elif case == 7:
-            params.update( {"Va":0.00625, "q0":-1.0, "p0":8.0, "sq0":0.25, "sp0":0.0} )
-
+            params.update( {"Va":0.0125, "q0":-1.0, "p0":8.0, "sq0":0.25, "sp0":0.0} )
 
     return params
 
 
+
 def run1D(nsnaps, nsteps):
-    for model in [3]:
-        for case in [0,1,2,3,4]:
+
+    models   = [2]
+    cases    = [0]
+    ent_opts = [0,1]
+
+    for model in models:
+        for case in cases:
+
+            # Initialize params dictionary
             params = init_params(model, case)
-            run_exact(nsnaps, nsteps, params, case)
+            params.update({"nsteps":nsteps, "nsnaps":nsnaps})
+             
+            # run numerically exact 
+            run_exact(params, case)
+
+            # run classical or quantum-classical
+            for ent_opt in ent_opts:
+                test_ethd_1D.run_QC_1D(params, case, ent_opt)                 
 
             plot_pes_1D(params,case)
 
-nsnaps = 100
-nsteps = 50
-run1D(nsnaps, nsteps)
-
+run1D(100, 10)
 

@@ -31,29 +31,20 @@ set style line 42 lc rgb '#C0C0C0' pt 6 ps 1 lt 1 lw 5 # --- silver
 set style line 43 lc rgb '#D2691E' pt 6 ps 1 lt 1 lw 5 # --- chocolate
 
 
-model = 3
+
+set linetype 1 dashtype (7,7,4,4,6,6) lc rgb '#FF0000' 
+set linetype 2 dashtype (7,7,4,4,6,6) lc rgb '#5e9c36'
+set linetype 3 dashtype (7,7,4,4,6,6) lc rgb '#000E8B'
+set linetype 4 dashtype (7,7,4,4,6,6) lc rgb '#FF7000'
+set linetype 5 dashtype (7,7,4,4,6,6) lc rgb '#800080'
 
 set border 31 lw 2
+set key font ",20"
 
-set linetype 1 dashtype (2,2,4,4,6,6) lc rgb '#00FF10'
-set linetype 2 dashtype (7,7,4,4,6,6) lc rgb '#000E8B' 
-set linetype 3 dashtype (7,7,4,4,6,6) lc rgb '#FF0000'
-set linetype 4 dashtype (7,7,4,4,6,6) lc rgb '#228B22'
-
+model = 2
 cases = 0
 
 do for [i=0:cases]  {
-
-unset xrange
-unset yrange
-set output "_fig1_".i."_model".model.".png"
-set key top right
-#set xrange[0:9]
-#set yrange[-0.1:1.0]
-set xlabel "t (fs)" offset 0.0, 0.5
-set ylabel "Decay of Initial State" offset 1.0, 0.0
-plot   "_pops".i.".txt" u ($1/41.3413745):(1.0 - $5) w l ls 32 lw 8 t "Q-2A=0.005",\
-#       "_qprob0.txt" u ($1/41.3410):(1.0 - $2) w l lt 8 lw 8  t "Q",\
 
 unset xrange
 unset yrange
@@ -63,7 +54,9 @@ set key top left
 #set yrange[-0.1:1.0]
 set xlabel "t (fs)" offset 0.0, 0.5
 set ylabel "<q>" offset 1.0, 0.0
-plot   "_pops".i.".txt" u ($1/41.3413745):6 w l ls 32 lw 8 t "Q-2A=0.005",\
+plot   "_output_20".i.".txt" u ($1/41.3410):($6) w l lt 3 lw 6 t "",\
+       "_output_21".i.".txt" u ($1/41.3410):($6) pt 7 ps 1 lc rgb '#000E8B' t "",\
+       "_pops".i.".txt" u   ($1/41.3413745):($6) w l ls 32 lw 6 t  "",\
 
 unset xrange
 unset yrange
@@ -73,7 +66,9 @@ set key top left
 #set yrange[-0.1:1.0]
 set xlabel "t (fs)" offset 0.0, 0.5
 set ylabel "<p>" offset 1.0, 0.0
-plot   "_pops".i.".txt" u ($1/41.3413745):7 w l ls 32 lw 8 t "Q-2A=0.005",\
+plot   "_output_20".i.".txt" u ($1/41.3410):($7) w l lt 3 lw 6 t "",\
+       "_output_21".i.".txt" u ($1/41.3410):($7) pt 7 ps 1 lc rgb '#000E8B' t "",\
+       "_pops".i.".txt" u   ($1/41.3413745):($7) w l ls 32 lw 6 t  "",\
 
 unset xrange
 unset yrange
@@ -83,7 +78,9 @@ set key top left
 #set yrange[-0.1:1.0]
 set xlabel "t (fs)" offset 0.0, 0.5
 set ylabel "<q^2>" offset 0.5, 0.0
-plot   "_pops".i.".txt" u ($1/41.3413745):8 w l ls 32 lw 8 t "Q-2A=0.005",\
+plot   "_output_20".i.".txt" u ($1/41.3410):($8) w l lt 3 lw 6 t "",\
+       "_output_21".i.".txt" u ($1/41.3410):($8) pt 7 ps 1 lc rgb '#000E8B' t "",\
+       "_pops".i.".txt" u   ($1/41.3413745):($8) w l ls 32 lw 6 t  "",\
 
 unset xrange
 unset yrange
@@ -93,7 +90,9 @@ set key top left
 #set yrange[-0.1:1.0]
 set xlabel "t (fs)" offset 0.0, 0.5
 set ylabel "<p^2>" offset 0.5, 0.0
-plot   "_pops".i.".txt" u ($1/41.3413745):9 w l ls 32 lw 8 t "Q-2A=0.005",\
+plot   "_output_20".i.".txt" u ($1/41.3410):($9) w l lt 3 lw 6 t "",\
+       "_output_21".i.".txt" u ($1/41.3410):($9) pt 7 ps 1 lc rgb '#000E8B' t "",\
+       "_pops".i.".txt" u   ($1/41.3413745):($9) w l ls 32 lw 6 t  "",\
 
 }
 

@@ -24,42 +24,41 @@ set style line 41 lc rgb '#2F4F4F' pt 6 ps 1 lt 1 lw 5 # --- darkslategray
 
 set border 31 lw 2
 
-nsteps = 50
+nsteps = 10
 dt = 1
 
-model = 3
+model = 2
 cases = 0
 
 do for [i=0:cases]  {
-  do for [j=0:99] {
-    set output 'res'.i.'/wfc.state0.frame'.j.'.png'
-    set xrange[-20:20]
-    set yrange[0:0.01]
+  do for [j=0:9] {
+    set output '_res'.i.'/wfc.state0.frame'.j.'.png'
+    set xrange[-3:6]
+    #set yrange[0:0.2]
     set ylabel "Amplitude (a.u)"  offset 0.0, 0.5
     set xlabel "Position (a.u), t = ".(j*dt*nsteps)." (a.u) "  offset 0.0, 0.2
     set nokey
-    plot  'res'.i.'/wfc.state0.frame'.j.'' u ($1):($2*0.005) w l lt 8 lw 8,\
-          "_pes.txt" u ($1):($2) w l ls 11 lw 5 t "",\
-  }
-}
+    plot  '_res'.i.'/wfc.state0.frame'.j.'' u ($1):($2) w l lt 8 lw 8,\
+          '_1D_dist_qc/_dist_'.model.'1'.i.'_'.(j*dt*nsteps).'.txt' u 1:($2) w l ls 22 lw 8 t "",\
+          '_pes'.i.'.txt' u ($1):($2) w l ls 11 lw 5 t "",\
+}}
   
 
 #do for [i=0:1]  {
 #  do for [j=0:cases]  {
-#    do for [k=0:74] {
+#    do for [k=0:99] {
 #      set output '_1D_dist_qc/_dist'.model.''.i.''.j.'_t'.(k*dt*nsteps).'.png'
-#      set xrange[-5:5]
+#      set xrange[-3:6]
 #      set yrange[0:0.02]
 #      set ylabel "Potential Energy (a.u)"  offset 0.0, 0.5
 #      set xlabel "Position (a.u), t = ".(k*dt*nsteps)." (a.u) "  offset 0.0, 0.2
 #      set nokey
-#      plot '_1D_dist_qc/_dist_'.model.''.i.''.j.'_'.(k*dt*nsteps).'.txt' u 1:($2*0.1) w l lt 8 lw 8 t "",\
-# #           "_pes.txt" u ($1):($2) w l ls 11 lw 5 t "",\
-#
+#      plot '_1D_dist_qc/_dist_'.model.''.i.''.j.'_'.(k*dt*nsteps).'.txt' u 1:($2*0.05) w l lt 8 lw 8 t "",\
+#            "_pes".j.".txt" u ($1):($2) w l ls 11 lw 5 t "",\
 #    }
 #  }
 #}
-#
+
 
 
 
