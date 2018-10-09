@@ -291,7 +291,7 @@ def run_exact(params, case):
     os.system("mkdir _res"+str(case)+"")
     for i in xrange(nsnaps):  # time steps
 
-        wfc.print_wfc_1D("_res"+str(case)+"/wfc", i*dt*nsteps, 0)   # Be sure to make a "res" directory
+        wfc.print_wfc_1D("_res"+str(case)+"/wfc", int(i*dt*nsteps), 0)   # Be sure to make a "res" directory
         #wfc.print_reci_wfc_1D("res/reci_wfc", i*dt*nsteps, 0)
 
         epot = wfc.e_pot_1D()
@@ -300,8 +300,13 @@ def run_exact(params, case):
         x, px   = wfc.get_x_1D(),  wfc.get_px_1D()
         x2, px2  = wfc.get_pow_x_1D(exp_pow[0]), wfc.get_pow_px_1D(2)
 
+        # Compute the uncertainties and uncertainy products
+        sx2  = x2  - x*x
+        spx2 = px2 - px*px 
+        uncp = sx2 * spx2
+
         f = open("_pops"+str(case)+".txt", "a")
-        f.write("%8.5f   %8.5f   %8.5f   %8.5f  %8.5f  %8.5f    %8.5f    %8.5f  %8.5f  %8.5f\n" % (i*nsteps*dt, ekin, epot, etot, cum, x, px, x2, px2, wfc.norm_1D())) 
+        f.write("%8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f\n" % (i*nsteps*dt, ekin, epot, etot, cum, x, px, x2, px2, sx2, spx2, uncp, wfc.norm_1D())) 
         f.close()
 
         for j in xrange(nsteps):  # time steps 
@@ -337,12 +342,19 @@ def init_params(model, case):
         params.update( {"barrier":50} )
 
         if   case == 0:
-            params.update( {"q0":0.0, "p0":0.0, "sq0":0.1, "sp0":0.0} )
-            params.update( {"k":0.032, "D":0.1, "x0":0.0, "mass":2000.0} )
+            params.update( {"q0":0.0, "p0":0.0, "sq0":0.1} )
+            params.update( {"k":0.032, "D":0.1, "sp0":0.50/params["sq0"], "x0":0.0, "mass":2000.0} )
+        if   case == 1:
+            params.update( {"q0":0.5, "p0":0.0, "sq0":0.1} )
+            params.update( {"k":0.032, "D":0.1, "sp0":0.50/params["sq0"], "x0":0.0, "mass":2000.0} )
+        if   case == 2:
+            params.update( {"q0":1.0, "p0":0.0, "sq0":0.1} )
+            params.update( {"k":0.032, "D":0.1, "sp0":0.50/params["sq0"], "x0":0.0, "mass":2000.0} )
+
 
     elif model == 3:
         # 1D sin potential
-        params.update( {"model":3} )
+        params.update( {"model":3,"mass":2000.0} )
 
         if   case == 0:
             params.update( {"A":0.0030, "B":0.5*math.pi, "C":0.0030, "k":1.0, "q0":0.0, "p0":0.0, "sq0":0.25, "sp0":0.0} )
@@ -355,29 +367,26 @@ def init_params(model, case):
         elif case == 4:
             params.update( {"A":0.0010, "B":0.5*math.pi, "C":0.0010, "k":1.0, "q0":0.0, "p0":0.0, "sq0":0.25, "sp0":0.0} )
 
+
+        params.update( {"sp0":0.50/params["sq0"]} )
         params.update( {"barrier":2.0*math.pi/params["k"]} )
 
 
     elif model == 4:
         # 1D eckart barrier
-        params.update( {"model":4} )
+        params.update( {"model":4,"mass":2000.0} )
+        params.update( {"barrier":0.0} )
 
         if   case == 0:
-            params.update( {"Va":0.0125, "q0":-1.0, "p0":1.0, "sq0":0.25, "sp0":0.0} )
+            params.update( {"Va":0.00625, "q0":-1.0, "p0":1.0, "sq0":0.25} )
         elif case == 1:
-            params.update( {"Va":0.0125, "q0":-1.0, "p0":2.0, "sq0":0.25, "sp0":0.0} )
+            params.update( {"Va":0.01250, "q0":-1.0, "p0":3.0, "sq0":0.25} )
         elif case == 2:
-            params.update( {"Va":0.0125, "q0":-1.0, "p0":3.0, "sq0":0.25, "sp0":0.0} )
+            params.update( {"Va":0.01875, "q0":-1.0, "p0":3.0, "sq0":0.25} )
         elif case == 3:
-            params.update( {"Va":0.0125, "q0":-1.0, "p0":4.0, "sq0":0.25, "sp0":0.0} )
-        elif case == 4:
-            params.update( {"Va":0.0125, "q0":-1.0, "p0":5.0, "sq0":0.25, "sp0":0.0} )
-        elif case == 5:
-            params.update( {"Va":0.0125, "q0":-1.0, "p0":6.0, "sq0":0.25, "sp0":0.0} )
-        elif case == 6:
-            params.update( {"Va":0.0125, "q0":-1.0, "p0":7.0, "sq0":0.25, "sp0":0.0} )
-        elif case == 7:
-            params.update( {"Va":0.0125, "q0":-1.0, "p0":8.0, "sq0":0.25, "sp0":0.0} )
+            params.update( {"Va":0.02500, "q0":-1.0, "p0":3.0, "sq0":0.25} )
+
+        params.update( {"sp0":0.50/params["sq0"]} )
 
     return params
 
@@ -385,7 +394,7 @@ def init_params(model, case):
 
 def run1D(nsnaps, nsteps):
 
-    models   = [2]
+    models   = [4]
     cases    = [0]
     ent_opts = [0,1]
 
@@ -405,5 +414,9 @@ def run1D(nsnaps, nsteps):
 
             plot_pes_1D(params,case)
 
-run1D(100, 10)
+    # Post-Processing
+    test_ethd_1D.make_fig(models,ent_opts,cases)
+
+run1D(150, 10)
+
 

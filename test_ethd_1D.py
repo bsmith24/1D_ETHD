@@ -261,8 +261,11 @@ def run_QC_1D(params, case, ent_opt):
     mean_q.set(0,0,params["q0"])  
     sigma_q.set(0,0,params["sq0"])
     mean_p.set(0,0,params["p0"])
-    #sigma_p.set(0,0,0.5/sigma_q.get(0,0))
-    sigma_p.set(0,0,params["sp0"])
+
+    if ent_opt == 0:
+        sigma_p.set(0,0,params["sp0"])
+    elif ent_opt == 1:
+        sigma_p.set(0,0,0.0)
 
     rnd = Random()
     q = MATRIX(nnucl,ntraj);  tsh.sample(q, mean_q, sigma_q, rnd)        
@@ -270,7 +273,7 @@ def run_QC_1D(params, case, ent_opt):
 
     # Set mass matricies  
     iM = MATRIX(nnucl,1);
-    iM.set(0,0, 1.0/2000.0)
+    iM.set(0,0, 1.0/params["mass"])
    
     # Compute Hamiltonian properties
     ham.compute_diabatic(compute_model, q, params, 1)
@@ -285,6 +288,9 @@ def run_QC_1D(params, case, ent_opt):
 
         aux_functs.bin(q, -50.0, 50.0, 0.1, "_1D_dist_qc/_dist_"+str(params["model"])+str(ent_opt)+str(case)+"_"+str(i*int(dt)*nsteps)+".txt")
         expect_q, expect_p, expect_q2, expect_p2 = aux_functs.compute_properties(q,p)
+        sx2  = expect_q2  - expect_q*expect_q
+        spx2 = expect_p2  - expect_p*expect_p
+        uncp = sx2 * spx2
 
         # Count the number of trajectories that cross the barrier 
         react_prob = aux_functs.traj_counter(q, params)
@@ -295,7 +301,7 @@ def run_QC_1D(params, case, ent_opt):
         # Print the ensemble average - kinetic, potential, and total energies
         # Print the tunneling information. Here, we count each trajectory across the barrier.
         out1 = open("_output_"+str(params["model"])+str(ent_opt)+str(case)+".txt", "a")
-        out1.write( " %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f\n" % (i*dt*nsteps, Ekin, Epot, Etot, react_prob, expect_q, expect_p, expect_q2, expect_p2) )
+        out1.write( "%8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f %8.5f\n" % (i*dt*nsteps, Ekin, Epot, Etot, react_prob, expect_q, expect_p, expect_q2, expect_p2, sx2, spx2, uncp) )
         out1.close()
         
         for j in xrange(nsteps):
@@ -330,6 +336,4 @@ def make_fig(models,ent_opts,cases):
                 out1.write( "%8.5f %8.5f %8.5f\n" % ( cases[j] + 0.0, data[i].get(0,j), data[i].get(1,j) ) )
                 out1.close()
 
-# Post-Processing
-#make_fig(models,ent_opts,cases)
 
