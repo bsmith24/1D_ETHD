@@ -34,7 +34,7 @@ def run_QC_1D(params, case, ent_opt):
     Runs tests for 1D model problems using ensembles of trajectories
     """
     
-    ndia, nadi, nnucl, ntraj = 1, 1, 1, 50000
+    ndia, nadi, nnucl, ntraj = 1, 1, 1, 10000
 
     # ======= Hierarchy of Hamiltonians =======
     ham = nHamiltonian(ndia, nadi, nnucl)
@@ -61,40 +61,28 @@ def run_QC_1D(params, case, ent_opt):
     rnd = Random()
     q = MATRIX(nnucl,ntraj)
     p = MATRIX(nnucl,ntraj)
-    if params["model"] == 1:
+
+    if ent_opt == 0:
+
         for n in xrange(len(params["wfc"]["weights"])):
+    
             params["wfc"]["weights"][n] = params["wfc"]["weights"][n].real
 
         sampling = test_ho.metropolis_gau(rnd, test_ho.HO_sup, q, params, ntraj, 2500, 0.05)
         print len(sampling)
-        test_ho.bin(sampling, -1.5, 2.0, 0.01, 0, 0, "_distrib-1.txt") 
+        test_ho.bin(sampling, -1.5, 2.0, 0.01, 0, 0, "_distrib-"+str(case)+".txt") 
+
         for i in xrange(q.num_of_rows):
             for j in xrange(q.num_of_cols):
-
                 q.set(i,j,sampling[j].get(i,0))
                 p.set(i,j,params["p0"])    
 
+        aux_functs.save_q_p_info(q,p,params,ent_opt,case) 
+
     else:
-        mean_q = MATRIX(nnucl,1);   
-        sigma_q = MATRIX(nnucl,1);
-        mean_p = MATRIX(nnucl,1);   
-        sigma_p = MATRIX(nnucl,1);  
-
-        mean_q.set(0,0,params["q0"])  
-        sigma_q.set(0,0,params["sq0"])
-        mean_p.set(0,0,params["p0"])
-
-        if ent_opt == 0:
-            sigma_p.set(0,0,0.5/params["sq0"])
-        elif ent_opt == 1 or ent_opt == 2:
-            sigma_p.set(0,0,0.0)
-
-        tsh.sample(q, mean_q, sigma_q, rnd)        
-        tsh.sample(p, mean_p, sigma_p, rnd)   
-
-    #print "\nent_opt = ", ent_opt
-    #q.show_matrix()
-    #p.show_matrix()
+        # Now we are extracting the initial coordiates from the previous (classical) simulation 
+    
+        q, p = aux_functs.get_q_p_info(params, 0, case)
 
     # Set mass matricies  
     iM = MATRIX(nnucl,1);
@@ -105,8 +93,6 @@ def run_QC_1D(params, case, ent_opt):
     ham.compute_adiabatic(1, 1);
     if ent_opt == 1:
         ham.add_ethd_adi(q, iM, 1)
-    if ent_opt == 2:
-        ham.add_ethd3_adi(q, iM, params["ETHD3_alpha"], 1)
 
     os.system("mkdir _1D_dist_qc")
     out1 = open("_output_"+str(params["model"])+str(ent_opt)+str(case)+".txt", "w"); out1.close()   
@@ -133,33 +119,3 @@ def run_QC_1D(params, case, ent_opt):
         
         for j in xrange(nsteps):
             Verlet1(dt, q, p, iM, ham, models.compute_model, params, ent_opt)
-
-
-def make_fig(models,ent_opts,cases):
-
-    # Need to specific what exactly the "cases" are. 
-    data = MATRIXList()
-    for i in xrange(len(models)):
-
-        data.append( MATRIX(len(ent_opts),len(cases)) )
-
-        for j in xrange(len(ent_opts)):
-            for k in xrange(len(cases)):
-
-                f = open("_output_"+str(models[i])+str(ent_opts[j])+str(cases[k])+".txt", "r")
-                l = f.readlines()
-                f.close()
-                b = l[-1].strip().split()
-                data[i].set(j,k,float(b[4]))
-      
-        out1 = open("_fig_model"+str(models[i])+".txt", "w"); out1.close()
-        for j in xrange(len(cases)):
-            out1 = open("_fig_model"+str(models[i])+".txt", "a")
-            if len(ent_opts) == 1:
-                out1.write( "%8.5f %8.5f\n" % ( cases[j] + 0.0, data[i].get(0,j) ) )
-                out1.close()
-            elif len(ent_opts) == 2:
-                out1.write( "%8.5f %8.5f %8.5f\n" % ( cases[j] + 0.0, data[i].get(0,j), data[i].get(1,j) ) )
-                out1.close()
-
-

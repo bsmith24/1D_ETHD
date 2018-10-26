@@ -150,23 +150,40 @@ def init_params(model, case):
 
         if case == 0:
 
-            params.update( {"q0":0.0, "p0":0.0, "sq0":0.1} )
+            params.update( {"q0":0.0, "p0":0.0} )
 
             # params needed for numerically exact simulation
             wfc = {}
-            wfc.update({"init_state":[0], "nu":[0], "weights":[1.0+0.0j], "x0":[0.0], "px0":[0.0]})
+            wfc.update({"init_state":[0], "nu":[0], "weights":[1.0+0.0j], "x0":[params["q0"]], "px0":[params["p0"]]})
             alp = math.sqrt(params["k"] * params["mass"])
             wfc.update({"alpha":[ alp ] })
             params.update( {"model":1, "wfc": wfc} )
 
         elif case == 1:
-
-            params.update( {"q0":0.0, "p0":0.0, "sq0":0.1} )
+            params.update( {"q0":0.0, "p0":0.0} )
             wfc = {}
-            wfc.update({"init_state":[0], "nu":[1], "weights":[1.0+0.0j], "x0":[0.0], "px0":[0.0]})
+            wfc.update({"init_state":[0,0], "nu":[0,1], "weights":[1.0+0.0j,1.0+0.0j], "x0":[params["q0"],params["q0"]], "px0":[params["p0"],params["p0"]]})
             alp = math.sqrt(params["k"] * params["mass"])
-            wfc.update({"alpha":[ alp ] })
+            wfc.update({"alpha":[ alp,alp ] })
             params.update( {"model":1, "wfc": wfc} )
+
+        elif case == 2:
+            params.update( {"q0":0.0, "p0":0.0} )
+            wfc = {}
+            wfc.update({"init_state":[0,0,0], "nu":[0,1,2], "weights":[1.0+0.0j,1.0+0.0j,1.0+0.0j], "x0":[params["q0"],params["q0"],params["q0"]], "px0":[params["p0"],params["p0"],params["p0"]]})
+            alp = math.sqrt(params["k"] * params["mass"])
+            wfc.update({"alpha":[ alp,alp,alp ] })
+            params.update( {"model":1, "wfc": wfc} )
+
+        elif case == 3:
+            params.update( {"q0":0.0, "p0":0.0} )
+            wfc = {}
+            wfc.update({"init_state":[0,0,0,0], "nu":[0,1,2,3], "weights":[1.0+0.0j,1.0+0.0j,1.0+0.0j,1.0+0.0j], "x0":[params["q0"],params["q0"],params["q0"],params["q0"]], "px0":[params["p0"],params["p0"],params["p0"],params["p0"]]})
+            alp = math.sqrt(params["k"] * params["mass"])
+            wfc.update({"alpha":[ alp,alp,alp,alp ] })
+            params.update( {"model":1, "wfc": wfc} )
+
+
 
         # Compute omega based on k
         omega = math.sqrt(params["k"]/params["mass"])
@@ -237,7 +254,7 @@ def init_params(model, case):
 def run1D(nsnaps, nsteps):
 
     models   = [1]
-    cases    = [1]
+    cases    = [1,2,3]
     ent_opts = [0,1]
 
     for model in models:
@@ -253,7 +270,7 @@ def run1D(nsnaps, nsteps):
             # run quanutm  
             if model == 1:
                 # run analytical
-                harmonic.run_analytical(params)
+                harmonic.run_analytical(params, case)
 
             else:
                 # run numerically exact
@@ -269,7 +286,7 @@ def run1D(nsnaps, nsteps):
     # Post-Processing
     #test_ethd_1D.make_fig(models,ent_opts,cases)
 
-run1D(413, 10)
+run1D(100, 10)
 
 
 
